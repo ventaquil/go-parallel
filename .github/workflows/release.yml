@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish to Go Proxy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+        cache: false
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Extract tag name
+      id: tag
+      run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Trigger Go proxy update
+      run: |
+        # The Go proxy automatically indexes new versions when they're requested
+        # We can trigger this by making a request to the proxy
+        MODULE="github.com/ventaquil/go-parallel"
+        VERSION="${{ steps.tag.outputs.TAG }}"
+
+        echo "Triggering Go proxy to index $MODULE@$VERSION"
+
+        # Request the module info from proxy.golang.org
+        curl -f "https://proxy.golang.org/$MODULE/@v/$VERSION.info"
+
+        # Also request the module list to ensure it's indexed
+        curl -f "https://proxy.golang.org/$MODULE/@v/list"
+
+        echo "Package should now be available via: go get $MODULE@$VERSION"
+    - name: Verify package availability
+      run: |
+        MODULE="github.com/ventaquil/go-parallel"
+        VERSION="${{ steps.tag.outputs.TAG }}"
+
+        # Wait a bit for the proxy to update
+        sleep 10
+
+        # Try to fetch package info
+        echo "Verifying package is available..."
+        if ! GOPROXY=https://proxy.golang.org go list -m -versions $MODULE; then
+          echo "ERROR: Package is not available in the Go proxy"
+          echo "This may happen if:"
+          echo "  - The repository is private"
+          echo "  - The tag was not pushed correctly"
+          echo "  - The Go proxy has not indexed the module yet"
+          exit 1
+        fi
+        echo "Package successfully verified in Go proxy"
