@@ -52,7 +52,7 @@ import (
 )
 
 func main() {
-    // Execute 10 tasks with maximum 3 running concurrently
+    // Execute tasks with maximum 3 running concurrently
     tasks := []func(){
         func() { fmt.Println("Task 1") },
         func() { fmt.Println("Task 2") },
@@ -64,6 +64,67 @@ func main() {
     parallel.RunWithLimit(3, tasks...)
 }
 ```
+
+### Process Slice Items in Parallel
+
+Execute a function for each item in a slice in parallel:
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/ventaquil/go-parallel"
+)
+
+func main() {
+    items := []int{1, 2, 3, 4, 5}
+    
+    parallel.RunForEach(items, func(item int) {
+        fmt.Printf("Processing item: %d\n", item)
+    })
+}
+```
+
+### Process Slice Items with Concurrency Limit
+
+Execute a function for each item with controlled concurrency:
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/ventaquil/go-parallel"
+)
+
+func main() {
+    items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    
+    // Process items with maximum 3 running concurrently
+    parallel.RunForEachWithLimit(3, items, func(item int) {
+        fmt.Printf("Processing item: %d\n", item)
+    })
+}
+```
+
+## API
+
+### `Run(fns ...func())`
+
+Executes the given functions in parallel and waits for all to complete.
+
+### `RunWithLimit(limit int, fns ...func())`
+
+Executes the given functions in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Panics if limit is less than or equal to 0.
+
+### `RunForEach[T any](items []T, fn func(item T))`
+
+Executes the given function for each item in the slice in parallel. Waits for all executions to complete before returning.
+
+### `RunForEachWithLimit[T any](limit int, items []T, fn func(item T))`
+
+Executes the given function for each item in the slice in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Panics if limit is less than or equal to 0.
 
 ## Implementation
 
