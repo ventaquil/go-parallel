@@ -60,33 +60,33 @@ func TestRunConcurrency(t *testing.T) {
 	}
 }
 
-// RunWithLimit tests
+// RunLimit tests
 
-func TestRunWithLimitEmpty(t *testing.T) {
-	RunWithLimit(5)
+func TestRunLimitEmpty(t *testing.T) {
+	RunLimit(5)
 }
 
-func TestRunWithLimitZero(t *testing.T) {
+func TestRunLimitZero(t *testing.T) {
 	defer func() {
 		if recover() == nil {
 			t.Error("Expected panic for limit = 0")
 		}
 	}()
 
-	RunWithLimit(0, func() {})
+	RunLimit(0, func() {})
 }
 
-func TestRunWithLimitNegative(t *testing.T) {
+func TestRunLimitNegative(t *testing.T) {
 	defer func() {
 		if recover() == nil {
 			t.Error("Expected panic for limit < 0")
 		}
 	}()
 
-	RunWithLimit(-1, func() {})
+	RunLimit(-1, func() {})
 }
 
-func TestRunWithLimit(t *testing.T) {
+func TestRunLimit(t *testing.T) {
 	var counter int32
 	var concurrent int32
 	var maxConcurrent int32
@@ -107,7 +107,7 @@ func TestRunWithLimit(t *testing.T) {
 		}
 	}
 
-	RunWithLimit(3, fns...)
+	RunLimit(3, fns...)
 
 	if counter != 10 {
 		t.Errorf("Expected counter to be 10, got %d", counter)
@@ -178,11 +178,11 @@ func TestRunForEachConcurrency(t *testing.T) {
 	}
 }
 
-// RunForEachWithLimit tests
+// RunForEachLimit tests
 
-func TestRunForEachWithLimitEmpty(t *testing.T) {
+func TestRunForEachLimitEmpty(t *testing.T) {
 	var counter int32
-	RunForEachWithLimit(5, []int{}, func(item int) {
+	RunForEachLimit(5, []int{}, func(item int) {
 		atomic.AddInt32(&counter, 1)
 	})
 
@@ -191,27 +191,27 @@ func TestRunForEachWithLimitEmpty(t *testing.T) {
 	}
 }
 
-func TestRunForEachWithLimitZero(t *testing.T) {
+func TestRunForEachLimitZero(t *testing.T) {
 	defer func() {
 		if recover() == nil {
 			t.Error("Expected panic for limit = 0")
 		}
 	}()
 
-	RunForEachWithLimit(0, []int{1, 2, 3}, func(item int) {})
+	RunForEachLimit(0, []int{1, 2, 3}, func(item int) {})
 }
 
-func TestRunForEachWithLimitNegative(t *testing.T) {
+func TestRunForEachLimitNegative(t *testing.T) {
 	defer func() {
 		if recover() == nil {
 			t.Error("Expected panic for limit < 0")
 		}
 	}()
 
-	RunForEachWithLimit(-1, []int{1, 2, 3}, func(item int) {})
+	RunForEachLimit(-1, []int{1, 2, 3}, func(item int) {})
 }
 
-func TestRunForEachWithLimit(t *testing.T) {
+func TestRunForEachLimit(t *testing.T) {
 	var counter int32
 	var concurrent int32
 	var maxConcurrent int32
@@ -221,7 +221,7 @@ func TestRunForEachWithLimit(t *testing.T) {
 		items[i] = i
 	}
 
-	RunForEachWithLimit(3, items, func(item int) {
+	RunForEachLimit(3, items, func(item int) {
 		current := atomic.AddInt32(&concurrent, 1)
 		for {
 			max := atomic.LoadInt32(&maxConcurrent)

@@ -61,7 +61,7 @@ func main() {
         func() { fmt.Println("Task 5") },
     }
     
-    parallel.RunWithLimit(3, tasks...)
+    parallel.RunLimit(3, tasks...)
 }
 ```
 
@@ -102,7 +102,7 @@ func main() {
     items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
     
     // Process items with maximum 3 running concurrently
-    parallel.RunForEachWithLimit(3, items, func(item int) {
+    parallel.RunForEachLimit(3, items, func(item int) {
         fmt.Printf("Processing item: %d\n", item)
     })
 }
@@ -114,7 +114,7 @@ func main() {
 
 Executes the given functions in parallel and waits for all to complete.
 
-### `RunWithLimit(limit int, fns ...func())`
+### `RunLimit(limit int, fns ...func())`
 
 Executes the given functions in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Panics if limit is less than or equal to 0.
 
@@ -122,7 +122,7 @@ Executes the given functions in parallel with a concurrency limit. Ensures that 
 
 Executes the given function for each item in the slice in parallel. Waits for all executions to complete before returning.
 
-### `RunForEachWithLimit[T any](limit int, items []T, fn func(item T))`
+### `RunForEachLimit[T any](limit int, items []T, fn func(item T))`
 
 Executes the given function for each item in the slice in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Panics if limit is less than or equal to 0.
 

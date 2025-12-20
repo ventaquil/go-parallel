@@ -7,9 +7,9 @@ The parallel package offers a simple and efficient way to execute multiple funct
 concurrently in Go. It provides four main functions:
 
   - Run: Execute functions in parallel without any concurrency limit
-  - RunWithLimit: Execute functions in parallel with a maximum concurrency limit
+  - RunLimit: Execute functions in parallel with a maximum concurrency limit
   - RunForEach: Execute a function for each item in a slice in parallel
-  - RunForEachWithLimit: Execute a function for each item with a concurrency limit
+  - RunForEachLimit: Execute a function for each item with a concurrency limit
 
 # Requirements
 
@@ -52,7 +52,7 @@ Execute multiple tasks in parallel without any limit:
 
 Execute tasks with a concurrency limit of 3:
 
-	parallel.RunWithLimit(3,
+	parallel.RunLimit(3,
 	    func() { processTask1() },
 	    func() { processTask2() },
 	    func() { processTask3() },
@@ -69,18 +69,18 @@ Execute a function for each item in a slice:
 
 Execute a function for each item with a concurrency limit:
 
-	parallel.RunForEachWithLimit(3, items, func(item int) {
+	parallel.RunForEachLimit(3, items, func(item int) {
 	    process(item)
 	})
 
 # Error Handling
 
-The RunWithLimit and RunForEachWithLimit functions will panic if the limit parameter
+The RunLimit and RunForEachLimit functions will panic if the limit parameter
 is less than or equal to 0. This is a programming error that should be caught during development:
 
 	// This will panic
-	parallel.RunWithLimit(0, tasks...)
-	parallel.RunForEachWithLimit(0, items, fn)
+	parallel.RunLimit(0, tasks...)
+	parallel.RunForEachLimit(0, items, fn)
 
 # Performance Considerations
 
@@ -89,10 +89,10 @@ for concurrency limiting. On Go 1.25+, it uses the WaitGroup.Go method.
 
 For optimal performance:
   - Use Run for CPU-bound tasks where you want maximum parallelism
-  - Use RunWithLimit for I/O-bound tasks or when you need to control resource usage
+  - Use RunLimit for I/O-bound tasks or when you need to control resource usage
   - Use RunForEach when you need to process a slice of items in parallel
-  - Use RunForEachWithLimit when processing items with controlled concurrency
-  - The limit in RunWithLimit and RunForEachWithLimit should typically match your expected concurrency requirements
+  - Use RunForEachLimit when processing items with controlled concurrency
+  - The limit in RunLimit and RunForEachLimit should typically match your expected concurrency requirements
 */
 
 package parallel

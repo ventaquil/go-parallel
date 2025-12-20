@@ -17,11 +17,11 @@ func Run(fns ...func()) {
 	wg.Wait()
 }
 
-// RunWithLimit executes the given functions in parallel with a concurrency limit.
+// RunLimit executes the given functions in parallel with a concurrency limit.
 // It ensures that at most 'limit' functions execute concurrently.
 // It panics if limit is less than or equal to 0.
 // This implementation uses WaitGroup.Go available in Go 1.25+.
-func RunWithLimit(limit int, fns ...func()) {
+func RunLimit(limit int, fns ...func()) {
 	if limit <= 0 {
 		panic("parallel: limit must be greater than 0")
 	}
@@ -54,11 +54,11 @@ func RunForEach[T any](items []T, fn func(item T)) {
 	wg.Wait()
 }
 
-// RunForEachWithLimit executes the given function for each item in the slice in parallel with a concurrency limit.
+// RunForEachLimit executes the given function for each item in the slice in parallel with a concurrency limit.
 // It ensures that at most 'limit' functions execute concurrently.
 // It panics if limit is less than or equal to 0.
 // This implementation uses WaitGroup.Go available in Go 1.25+.
-func RunForEachWithLimit[T any](limit int, items []T, fn func(item T)) {
+func RunForEachLimit[T any](limit int, items []T, fn func(item T)) {
 	if limit <= 0 {
 		panic("parallel: limit must be greater than 0")
 	}
