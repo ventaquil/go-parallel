@@ -27,3 +27,10 @@ jobs:
         VERSION="${GITHUB_REF#refs/tags/}"
         curl -fsSL "https://proxy.golang.org/github.com/ventaquil/go-parallel/@v/$VERSION.info" || true
         echo "Package: github.com/ventaquil/go-parallel@$VERSION"
+
+    - name: Request pkg.go.dev indexing
+      run: |
+        VERSION="${GITHUB_REF#refs/tags/}"
+        echo "Requesting pkg.go.dev to index $VERSION"
+        curl -fsSL "https://pkg.go.dev/github.com/ventaquil/go-parallel@$VERSION" > /dev/null || true
+        echo "Indexing requested for: https://pkg.go.dev/github.com/ventaquil/go-parallel@$VERSION"
