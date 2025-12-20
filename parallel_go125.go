@@ -11,11 +11,9 @@ import (
 // This implementation uses WaitGroup.Go available in Go 1.25+.
 func Run(fns ...func()) {
 	var wg sync.WaitGroup
-
 	for _, fn := range fns {
 		wg.Go(fn)
 	}
-
 	wg.Wait()
 }
 
@@ -29,9 +27,7 @@ func RunWithLimit(limit int, fns ...func()) {
 	}
 
 	var wg sync.WaitGroup
-
 	sem := make(chan struct{}, limit)
-
 	for _, fn := range fns {
 		sem <- struct{}{}
 
@@ -42,7 +38,6 @@ func RunWithLimit(limit int, fns ...func()) {
 			fn()
 		})
 	}
-
 	wg.Wait()
 }
 
@@ -51,13 +46,11 @@ func RunWithLimit(limit int, fns ...func()) {
 // This implementation uses WaitGroup.Go available in Go 1.25+.
 func RunForEach[T any](items []T, fn func(item T)) {
 	var wg sync.WaitGroup
-
 	for _, item := range items {
 		wg.Go(func() {
 			fn(item)
 		})
 	}
-
 	wg.Wait()
 }
 
@@ -71,9 +64,7 @@ func RunForEachWithLimit[T any](limit int, items []T, fn func(item T)) {
 	}
 
 	var wg sync.WaitGroup
-
 	sem := make(chan struct{}, limit)
-
 	for _, item := range items {
 		sem <- struct{}{}
 
@@ -84,6 +75,5 @@ func RunForEachWithLimit[T any](limit int, items []T, fn func(item T)) {
 			fn(item)
 		})
 	}
-
 	wg.Wait()
 }

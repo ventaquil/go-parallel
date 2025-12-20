@@ -10,7 +10,6 @@ import (
 // It returns when all functions have finished execution.
 func Run(fns ...func()) {
 	var wg sync.WaitGroup
-
 	wg.Add(len(fns))
 	for _, fn := range fns {
 		go func(f func()) {
@@ -18,7 +17,6 @@ func Run(fns ...func()) {
 			f()
 		}(fn)
 	}
-
 	wg.Wait()
 }
 
@@ -31,9 +29,7 @@ func RunWithLimit(limit int, fns ...func()) {
 	}
 
 	var wg sync.WaitGroup
-
 	sem := make(chan struct{}, limit)
-
 	wg.Add(len(fns))
 	for _, fn := range fns {
 		sem <- struct{}{}
@@ -46,7 +42,6 @@ func RunWithLimit(limit int, fns ...func()) {
 			f()
 		}(fn)
 	}
-
 	wg.Wait()
 }
 
@@ -54,7 +49,6 @@ func RunWithLimit(limit int, fns ...func()) {
 // It waits for all executions to complete before returning.
 func RunForEach[T any](items []T, fn func(item T)) {
 	var wg sync.WaitGroup
-
 	wg.Add(len(items))
 	for _, item := range items {
 		go func(it T) {
@@ -62,7 +56,6 @@ func RunForEach[T any](items []T, fn func(item T)) {
 			fn(it)
 		}(item)
 	}
-
 	wg.Wait()
 }
 
@@ -75,9 +68,7 @@ func RunForEachWithLimit[T any](limit int, items []T, fn func(item T)) {
 	}
 
 	var wg sync.WaitGroup
-
 	sem := make(chan struct{}, limit)
-
 	wg.Add(len(items))
 	for _, item := range items {
 		sem <- struct{}{}
@@ -90,6 +81,5 @@ func RunForEachWithLimit[T any](limit int, items []T, fn func(item T)) {
 			fn(it)
 		}(item)
 	}
-
 	wg.Wait()
 }
