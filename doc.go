@@ -4,12 +4,16 @@ Package parallel provides utilities for executing functions concurrently with op
 # Overview
 
 The parallel package offers a simple and efficient way to execute multiple functions
-concurrently in Go. It provides four main functions:
+concurrently in Go. It provides eight main functions:
 
   - Run: Execute functions in parallel without any concurrency limit
+  - RunContext: Execute functions in parallel with context support and error handling
   - RunLimit: Execute functions in parallel with a maximum concurrency limit
+  - RunLimitContext: Execute functions with concurrency limit, context support and error handling
   - RunForEach: Execute a function for each item in a slice in parallel
+  - RunForEachContext: Execute a function for each item with context support and error handling
   - RunForEachLimit: Execute a function for each item with a concurrency limit
+  - RunForEachLimitContext: Execute a function for each item with concurrency limit, context and error handling
 
 # Requirements
 
@@ -73,6 +77,25 @@ Execute a function for each item with a concurrency limit:
 	    process(item)
 	})
 
+Execute functions with context and error handling:
+
+	ctx := context.Background()
+	err := parallel.RunContext(ctx,
+	    func(ctx context.Context) error {
+	        return processTask1(ctx)
+	    },
+	    func(ctx context.Context) error {
+	        return processTask2(ctx)
+	    },
+	)
+
+Execute functions for each item with context and error handling:
+
+	ctx := context.Background()
+	err := parallel.RunForEachContext(ctx, items, func(ctx context.Context, item int) error {
+	    return processItem(ctx, item)
+	})
+
 # Error Handling
 
 All functions that accept a limit parameter return an error if the limit is
@@ -81,6 +104,16 @@ less than or equal to 0:
 	// These will return an error
 	err := parallel.RunLimit(0, tasks...)
 	err := parallel.RunForEachLimit(0, items, fn)
+	err := parallel.RunLimitContext(ctx, 0, tasks...)
+	err := parallel.RunForEachLimitContext(ctx, 0, items, fn)
+
+The context-aware functions (RunContext, RunLimitContext, RunForEachContext,
+and RunForEachLimitContext) return errors instead of panicking:
+
+  - They return the first error encountered from any function
+  - When an error occurs, the context is cancelled for remaining functions
+  - Only the first error is returned; subsequent errors are discarded
+  - RunLimitContext and RunForEachLimitContext return an error if limit <= 0
 
 # Performance Considerations
 
@@ -92,6 +125,7 @@ For optimal performance:
   - Use RunLimit for I/O-bound tasks or when you need to control resource usage
   - Use RunForEach when you need to process a slice of items in parallel
   - Use RunForEachLimit when processing items with controlled concurrency
+  - Use context-aware functions (RunContext, RunForEachContext, etc.) when you need error handling and cancellation support
   - The limit in RunLimit and RunForEachLimit should typically match your expected concurrency requirements
 */
 

@@ -108,6 +108,69 @@ func main() {
 }
 ```
 
+### Context-Aware Execution with Error Handling
+
+Execute functions with context support and error handling:
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/ventaquil/go-parallel"
+)
+
+func main() {
+    ctx := context.Background()
+    
+    err := parallel.RunContext(ctx,
+        func(ctx context.Context) error {
+            fmt.Println("Task 1")
+            return nil
+        },
+        func(ctx context.Context) error {
+            fmt.Println("Task 2")
+            return nil
+        },
+    )
+    
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
+}
+```
+
+### Process Items with Context and Concurrency Limit
+
+Combine concurrency control with context and error handling:
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/ventaquil/go-parallel"
+)
+
+func main() {
+    ctx := context.Background()
+    items := []int{1, 2, 3, 4, 5}
+    
+    err := parallel.RunForEachLimitContext(ctx, 3, items,
+        func(ctx context.Context, item int) error {
+            fmt.Printf("Processing item: %d\n", item)
+            return nil
+        },
+    )
+    
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
+}
+```
+
 ## API
 
 ### `Run(fns ...func())`
@@ -125,6 +188,22 @@ Executes the given function for each item in the slice in parallel. Waits for al
 ### `RunForEachLimit[T any](limit int, items []T, fn func(item T)) error`
 
 Executes the given function for each item in the slice in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Returns an error if limit is less than or equal to 0.
+
+### `RunContext(ctx context.Context, fns ...func(ctx context.Context) error) error`
+
+Executes the given functions in parallel with context support. Returns the first error encountered, if any, and cancels the context for remaining functions. Only the first error is returned; subsequent errors are discarded.
+
+### `RunLimitContext(ctx context.Context, limit int, fns ...func(ctx context.Context) error) error`
+
+Executes the given functions in parallel with a concurrency limit and context support. Returns an error if limit is less than or equal to 0. Returns the first error encountered from any function.
+
+### `RunForEachContext[T any](ctx context.Context, items []T, fn func(ctx context.Context, item T) error) error`
+
+Executes the given function for each item in the slice in parallel with context support. Returns the first error encountered, if any, and cancels the context for remaining functions.
+
+### `RunForEachLimitContext[T any](ctx context.Context, limit int, items []T, fn func(ctx context.Context, item T) error) error`
+
+Executes the given function for each item in the slice in parallel with a concurrency limit and context support. Returns an error if limit is less than or equal to 0. Returns the first error encountered from any function.
 
 ## Implementation
 
