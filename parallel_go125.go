@@ -3,8 +3,12 @@
 package parallel
 
 import (
+	"errors"
 	"sync"
 )
+
+// ErrInvalidLimit is returned when a limit parameter is less than or equal to 0.
+var ErrInvalidLimit = errors.New("limit must be greater than 0")
 
 // Run executes the given functions in parallel and waits for all to complete.
 // It returns when all functions have finished execution.
@@ -19,11 +23,11 @@ func Run(fns ...func()) {
 
 // RunLimit executes the given functions in parallel with a concurrency limit.
 // It ensures that at most 'limit' functions execute concurrently.
-// It panics if limit is less than or equal to 0.
+// It returns an error if limit is less than or equal to 0.
 // This implementation uses WaitGroup.Go available in Go 1.25+.
-func RunLimit(limit int, fns ...func()) {
+func RunLimit(limit int, fns ...func()) error {
 	if limit <= 0 {
-		panic("parallel: limit must be greater than 0")
+		return ErrInvalidLimit
 	}
 
 	var wg sync.WaitGroup
@@ -39,6 +43,8 @@ func RunLimit(limit int, fns ...func()) {
 		})
 	}
 	wg.Wait()
+
+	return nil
 }
 
 // RunForEach executes the given function for each item in the slice in parallel.
@@ -56,11 +62,11 @@ func RunForEach[T any](items []T, fn func(item T)) {
 
 // RunForEachLimit executes the given function for each item in the slice in parallel with a concurrency limit.
 // It ensures that at most 'limit' functions execute concurrently.
-// It panics if limit is less than or equal to 0.
+// It returns an error if limit is less than or equal to 0.
 // This implementation uses WaitGroup.Go available in Go 1.25+.
-func RunForEachLimit[T any](limit int, items []T, fn func(item T)) {
+func RunForEachLimit[T any](limit int, items []T, fn func(item T)) error {
 	if limit <= 0 {
-		panic("parallel: limit must be greater than 0")
+		return ErrInvalidLimit
 	}
 
 	var wg sync.WaitGroup
@@ -76,4 +82,6 @@ func RunForEachLimit[T any](limit int, items []T, fn func(item T)) {
 		})
 	}
 	wg.Wait()
+
+	return nil
 }

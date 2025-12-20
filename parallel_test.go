@@ -63,27 +63,24 @@ func TestRunConcurrency(t *testing.T) {
 // RunLimit tests
 
 func TestRunLimitEmpty(t *testing.T) {
-	RunLimit(5)
+	err := RunLimit(5)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 }
 
 func TestRunLimitZero(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Error("Expected panic for limit = 0")
-		}
-	}()
-
-	RunLimit(0, func() {})
+	err := RunLimit(0, func() {})
+	if err == nil {
+		t.Error("Expected error for limit = 0")
+	}
 }
 
 func TestRunLimitNegative(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Error("Expected panic for limit < 0")
-		}
-	}()
-
-	RunLimit(-1, func() {})
+	err := RunLimit(-1, func() {})
+	if err == nil {
+		t.Error("Expected error for limit < 0")
+	}
 }
 
 func TestRunLimit(t *testing.T) {
@@ -182,33 +179,31 @@ func TestRunForEachConcurrency(t *testing.T) {
 
 func TestRunForEachLimitEmpty(t *testing.T) {
 	var counter int32
-	RunForEachLimit(5, []int{}, func(item int) {
+	err := RunForEachLimit(5, []int{}, func(item int) {
 		atomic.AddInt32(&counter, 1)
 	})
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if counter != 0 {
 		t.Errorf("Expected counter to be 0, got %d", counter)
 	}
 }
 
-func TestRunForEachLimitZero(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Error("Expected panic for limit = 0")
-		}
-	}()
-
-	RunForEachLimit(0, []int{1, 2, 3}, func(item int) {})
+func TestRunForEachWithLimitZero(t *testing.T) {
+	err := RunForEachLimit(0, []int{1, 2, 3}, func(item int) {})
+	if err == nil {
+		t.Error("Expected error for limit = 0")
+	}
 }
 
 func TestRunForEachLimitNegative(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Error("Expected panic for limit < 0")
-		}
-	}()
-
-	RunForEachLimit(-1, []int{1, 2, 3}, func(item int) {})
+	err := RunForEachLimit(-1, []int{1, 2, 3}, func(item int) {})
+	if err == nil {
+		t.Error("Expected error for limit < 0")
+	}
 }
 
 func TestRunForEachLimit(t *testing.T) {

@@ -114,17 +114,17 @@ func main() {
 
 Executes the given functions in parallel and waits for all to complete.
 
-### `RunLimit(limit int, fns ...func())`
+### `RunLimit(limit int, fns ...func()) error`
 
-Executes the given functions in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Panics if limit is less than or equal to 0.
+Executes the given functions in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Returns an error if limit is less than or equal to 0.
 
 ### `RunForEach[T any](items []T, fn func(item T))`
 
 Executes the given function for each item in the slice in parallel. Waits for all executions to complete before returning.
 
-### `RunForEachLimit[T any](limit int, items []T, fn func(item T))`
+### `RunForEachLimit[T any](limit int, items []T, fn func(item T)) error`
 
-Executes the given function for each item in the slice in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Panics if limit is less than or equal to 0.
+Executes the given function for each item in the slice in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Returns an error if limit is less than or equal to 0.
 
 ## Implementation
 

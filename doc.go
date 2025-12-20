@@ -75,12 +75,12 @@ Execute a function for each item with a concurrency limit:
 
 # Error Handling
 
-The RunLimit and RunForEachLimit functions will panic if the limit parameter
-is less than or equal to 0. This is a programming error that should be caught during development:
+All functions that accept a limit parameter return an error if the limit is
+less than or equal to 0:
 
-	// This will panic
-	parallel.RunLimit(0, tasks...)
-	parallel.RunForEachLimit(0, items, fn)
+	// These will return an error
+	err := parallel.RunLimit(0, tasks...)
+	err := parallel.RunForEachLimit(0, items, fn)
 
 # Performance Considerations
 
