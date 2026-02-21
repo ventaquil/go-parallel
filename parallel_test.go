@@ -12,17 +12,24 @@ import (
 // Run tests
 
 func TestRunEmpty(t *testing.T) {
-	Run()
+	err := Run()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 }
 
 func TestRun(t *testing.T) {
 	var counter int32
 
-	Run(
-		func() { atomic.AddInt32(&counter, 1) },
-		func() { atomic.AddInt32(&counter, 1) },
-		func() { atomic.AddInt32(&counter, 1) },
+	err := Run(
+		func() error { atomic.AddInt32(&counter, 1); return nil },
+		func() error { atomic.AddInt32(&counter, 1); return nil },
+		func() error { atomic.AddInt32(&counter, 1); return nil },
 	)
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if counter != 3 {
 		t.Errorf("Expected counter to be 3, got %d", counter)
@@ -33,25 +40,32 @@ func TestRunConcurrency(t *testing.T) {
 	var mu sync.Mutex
 	var order []int
 
-	Run(
-		func() {
+	err := Run(
+		func() error {
 			time.Sleep(20 * time.Millisecond)
 			mu.Lock()
 			order = append(order, 1)
 			mu.Unlock()
+			return nil
 		},
-		func() {
+		func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			order = append(order, 2)
 			mu.Unlock()
+			return nil
 		},
-		func() {
+		func() error {
 			mu.Lock()
 			order = append(order, 3)
 			mu.Unlock()
+			return nil
 		},
 	)
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if len(order) != 3 {
 		t.Errorf("Expected 3 executions, got %d", len(order))
@@ -69,18 +83,9 @@ func TestRunContextSuccess(t *testing.T) {
 	var counter int32
 
 	err := RunContext(ctx,
-		func(ctx context.Context) error {
-			atomic.AddInt32(&counter, 1)
-			return nil
-		},
-		func(ctx context.Context) error {
-			atomic.AddInt32(&counter, 1)
-			return nil
-		},
-		func(ctx context.Context) error {
-			atomic.AddInt32(&counter, 1)
-			return nil
-		},
+		func(ctx context.Context) error { atomic.AddInt32(&counter, 1); return nil },
+		func(ctx context.Context) error { atomic.AddInt32(&counter, 1); return nil },
+		func(ctx context.Context) error { atomic.AddInt32(&counter, 1); return nil },
 	)
 
 	if err != nil {
@@ -97,17 +102,9 @@ func TestRunContextError(t *testing.T) {
 	testErr := errors.New("test error")
 
 	err := RunContext(ctx,
-		func(ctx context.Context) error {
-			time.Sleep(10 * time.Millisecond)
-			return nil
-		},
-		func(ctx context.Context) error {
-			return testErr
-		},
-		func(ctx context.Context) error {
-			time.Sleep(20 * time.Millisecond)
-			return nil
-		},
+		func(ctx context.Context) error { time.Sleep(10 * time.Millisecond); return nil },
+		func(ctx context.Context) error { return testErr },
+		func(ctx context.Context) error { time.Sleep(20 * time.Millisecond); return nil },
 	)
 
 	if err != testErr {
@@ -121,10 +118,7 @@ func TestRunContextCancellation(t *testing.T) {
 	var executed int32
 
 	err := RunContext(ctx,
-		func(ctx context.Context) error {
-			atomic.AddInt32(&executed, 1)
-			return testErr
-		},
+		func(ctx context.Context) error { atomic.AddInt32(&executed, 1); return testErr },
 		func(ctx context.Context) error {
 			time.Sleep(50 * time.Millisecond)
 			select {
@@ -152,14 +146,14 @@ func TestRunLimitEmpty(t *testing.T) {
 }
 
 func TestRunLimitZero(t *testing.T) {
-	err := RunLimit(0, func() {})
+	err := RunLimit(0, func() error { return nil })
 	if err == nil {
 		t.Error("Expected error for limit = 0")
 	}
 }
 
 func TestRunLimitNegative(t *testing.T) {
-	err := RunLimit(-1, func() {})
+	err := RunLimit(-1, func() error { return nil })
 	if err == nil {
 		t.Error("Expected error for limit < 0")
 	}
@@ -170,9 +164,9 @@ func TestRunLimit(t *testing.T) {
 	var concurrent int32
 	var maxConcurrent int32
 
-	fns := make([]func(), 10)
+	fns := make([]func() error, 10)
 	for i := 0; i < 10; i++ {
-		fns[i] = func() {
+		fns[i] = func() error {
 			current := atomic.AddInt32(&concurrent, 1)
 			for {
 				max := atomic.LoadInt32(&maxConcurrent)
@@ -183,10 +177,15 @@ func TestRunLimit(t *testing.T) {
 			time.Sleep(10 * time.Millisecond)
 			atomic.AddInt32(&counter, 1)
 			atomic.AddInt32(&concurrent, -1)
+			return nil
 		}
 	}
 
-	RunLimit(3, fns...)
+	err := RunLimit(3, fns...)
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if counter != 10 {
 		t.Errorf("Expected counter to be 10, got %d", counter)
@@ -204,18 +203,9 @@ func TestRunLimitContextSuccess(t *testing.T) {
 	var counter int32
 
 	err := RunLimitContext(ctx, 2,
-		func(ctx context.Context) error {
-			atomic.AddInt32(&counter, 1)
-			return nil
-		},
-		func(ctx context.Context) error {
-			atomic.AddInt32(&counter, 1)
-			return nil
-		},
-		func(ctx context.Context) error {
-			atomic.AddInt32(&counter, 1)
-			return nil
-		},
+		func(ctx context.Context) error { atomic.AddInt32(&counter, 1); return nil },
+		func(ctx context.Context) error { atomic.AddInt32(&counter, 1); return nil },
+		func(ctx context.Context) error { atomic.AddInt32(&counter, 1); return nil },
 	)
 
 	if err != nil {
@@ -244,13 +234,8 @@ func TestRunLimitContextError(t *testing.T) {
 	testErr := errors.New("test error")
 
 	err := RunLimitContext(ctx, 2,
-		func(ctx context.Context) error {
-			time.Sleep(10 * time.Millisecond)
-			return nil
-		},
-		func(ctx context.Context) error {
-			return testErr
-		},
+		func(ctx context.Context) error { time.Sleep(10 * time.Millisecond); return nil },
+		func(ctx context.Context) error { return testErr },
 	)
 
 	if err != testErr {
@@ -262,9 +247,11 @@ func TestRunLimitContextError(t *testing.T) {
 
 func TestRunForEachEmpty(t *testing.T) {
 	var counter int32
-	RunForEach([]int{}, func(item int) {
-		atomic.AddInt32(&counter, 1)
-	})
+	err := RunForEach([]int{}, func(item int) error { atomic.AddInt32(&counter, 1); return nil })
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if counter != 0 {
 		t.Errorf("Expected counter to be 0, got %d", counter)
@@ -274,9 +261,11 @@ func TestRunForEachEmpty(t *testing.T) {
 func TestRunForEach(t *testing.T) {
 	var counter int32
 
-	RunForEach([]int{1, 2, 3, 4, 5}, func(item int) {
-		atomic.AddInt32(&counter, int32(item))
-	})
+	err := RunForEach([]int{1, 2, 3, 4, 5}, func(item int) error { atomic.AddInt32(&counter, int32(item)); return nil })
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if counter != 15 {
 		t.Errorf("Expected counter to be 15, got %d", counter)
@@ -287,11 +276,16 @@ func TestRunForEachGenerics(t *testing.T) {
 	var mu sync.Mutex
 	var results []string
 
-	RunForEach([]string{"a", "b", "c"}, func(item string) {
+	err := RunForEach([]string{"a", "b", "c"}, func(item string) error {
 		mu.Lock()
 		results = append(results, item)
 		mu.Unlock()
+		return nil
 	})
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if len(results) != 3 {
 		t.Errorf("Expected 3 results, got %d", len(results))
@@ -302,12 +296,17 @@ func TestRunForEachConcurrency(t *testing.T) {
 	var mu sync.Mutex
 	var order []int
 
-	RunForEach([]int{10, 20, 30}, func(item int) {
+	err := RunForEach([]int{10, 20, 30}, func(item int) error {
 		time.Sleep(time.Duration(40-item) * time.Millisecond)
 		mu.Lock()
 		order = append(order, item)
 		mu.Unlock()
+		return nil
 	})
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if len(order) != 3 {
 		t.Errorf("Expected 3 results, got %d", len(order))
@@ -324,10 +323,7 @@ func TestRunForEachContextSuccess(t *testing.T) {
 	ctx := context.Background()
 	var sum int32
 
-	err := RunForEachContext(ctx, []int{1, 2, 3, 4, 5}, func(ctx context.Context, item int) error {
-		atomic.AddInt32(&sum, int32(item))
-		return nil
-	})
+	err := RunForEachContext(ctx, []int{1, 2, 3, 4, 5}, func(ctx context.Context, item int) error { atomic.AddInt32(&sum, int32(item)); return nil })
 
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -357,9 +353,7 @@ func TestRunForEachContextError(t *testing.T) {
 func TestRunForEachContextEmpty(t *testing.T) {
 	ctx := context.Background()
 
-	err := RunForEachContext(ctx, []int{}, func(ctx context.Context, item int) error {
-		return errors.New("should not be called")
-	})
+	err := RunForEachContext(ctx, []int{}, func(ctx context.Context, item int) error { return errors.New("should not be called") })
 
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -370,9 +364,7 @@ func TestRunForEachContextEmpty(t *testing.T) {
 
 func TestRunForEachLimitEmpty(t *testing.T) {
 	var counter int32
-	err := RunForEachLimit(5, []int{}, func(item int) {
-		atomic.AddInt32(&counter, 1)
-	})
+	err := RunForEachLimit(5, []int{}, func(item int) error { atomic.AddInt32(&counter, 1); return nil })
 
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -384,14 +376,14 @@ func TestRunForEachLimitEmpty(t *testing.T) {
 }
 
 func TestRunForEachWithLimitZero(t *testing.T) {
-	err := RunForEachLimit(0, []int{1, 2, 3}, func(item int) {})
+	err := RunForEachLimit(0, []int{1, 2, 3}, func(item int) error { return nil })
 	if err == nil {
 		t.Error("Expected error for limit = 0")
 	}
 }
 
 func TestRunForEachLimitNegative(t *testing.T) {
-	err := RunForEachLimit(-1, []int{1, 2, 3}, func(item int) {})
+	err := RunForEachLimit(-1, []int{1, 2, 3}, func(item int) error { return nil })
 	if err == nil {
 		t.Error("Expected error for limit < 0")
 	}
@@ -407,7 +399,7 @@ func TestRunForEachLimit(t *testing.T) {
 		items[i] = i
 	}
 
-	RunForEachLimit(3, items, func(item int) {
+	err := RunForEachLimit(3, items, func(item int) error {
 		current := atomic.AddInt32(&concurrent, 1)
 		for {
 			max := atomic.LoadInt32(&maxConcurrent)
@@ -418,7 +410,12 @@ func TestRunForEachLimit(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		atomic.AddInt32(&counter, 1)
 		atomic.AddInt32(&concurrent, -1)
+		return nil
 	})
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	if counter != 10 {
 		t.Errorf("Expected counter to be 10, got %d", counter)
@@ -435,10 +432,7 @@ func TestRunForEachLimitContextSuccess(t *testing.T) {
 	ctx := context.Background()
 	var sum int32
 
-	err := RunForEachLimitContext(ctx, 2, []int{1, 2, 3, 4, 5}, func(ctx context.Context, item int) error {
-		atomic.AddInt32(&sum, int32(item))
-		return nil
-	})
+	err := RunForEachLimitContext(ctx, 2, []int{1, 2, 3, 4, 5}, func(ctx context.Context, item int) error { atomic.AddInt32(&sum, int32(item)); return nil })
 
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -452,9 +446,7 @@ func TestRunForEachLimitContextSuccess(t *testing.T) {
 func TestRunForEachLimitContextZero(t *testing.T) {
 	ctx := context.Background()
 
-	err := RunForEachLimitContext(ctx, 0, []int{1, 2, 3}, func(ctx context.Context, item int) error {
-		return nil
-	})
+	err := RunForEachLimitContext(ctx, 0, []int{1, 2, 3}, func(ctx context.Context, item int) error { return nil })
 
 	if err == nil {
 		t.Error("Expected error for limit = 0")

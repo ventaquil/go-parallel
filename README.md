@@ -31,11 +31,14 @@ import (
 )
 
 func main() {
-    parallel.Run(
-        func() { fmt.Println("Task 1") },
-        func() { fmt.Println("Task 2") },
-        func() { fmt.Println("Task 3") },
+    err := parallel.Run(
+        func() error { fmt.Println("Task 1"); return nil },
+        func() error { fmt.Println("Task 2"); return nil },
+        func() error { fmt.Println("Task 3"); return nil },
     )
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
 }
 ```
 
@@ -53,15 +56,18 @@ import (
 
 func main() {
     // Execute tasks with maximum 3 running concurrently
-    tasks := []func(){
-        func() { fmt.Println("Task 1") },
-        func() { fmt.Println("Task 2") },
-        func() { fmt.Println("Task 3") },
-        func() { fmt.Println("Task 4") },
-        func() { fmt.Println("Task 5") },
+    tasks := []func() error{
+        func() error { fmt.Println("Task 1"); return nil },
+        func() error { fmt.Println("Task 2"); return nil },
+        func() error { fmt.Println("Task 3"); return nil },
+        func() error { fmt.Println("Task 4"); return nil },
+        func() error { fmt.Println("Task 5"); return nil },
     }
     
-    parallel.RunLimit(3, tasks...)
+    err := parallel.RunLimit(3, tasks...)
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
 }
 ```
 
@@ -80,9 +86,13 @@ import (
 func main() {
     items := []int{1, 2, 3, 4, 5}
     
-    parallel.RunForEach(items, func(item int) {
+    err := parallel.RunForEach(items, func(item int) error {
         fmt.Printf("Processing item: %d\n", item)
+        return nil
     })
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
 }
 ```
 
@@ -102,9 +112,13 @@ func main() {
     items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
     
     // Process items with maximum 3 running concurrently
-    parallel.RunForEachLimit(3, items, func(item int) {
+    err := parallel.RunForEachLimit(3, items, func(item int) error {
         fmt.Printf("Processing item: %d\n", item)
+        return nil
     })
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
 }
 ```
 
@@ -173,19 +187,19 @@ func main() {
 
 ## API
 
-### `Run(fns ...func())`
+### `Run(fns ...func() error) error`
 
-Executes the given functions in parallel and waits for all to complete.
+Executes the given functions in parallel and waits for all to complete. Returns the first error encountered, if any.
 
-### `RunLimit(limit int, fns ...func()) error`
+### `RunLimit(limit int, fns ...func() error) error`
 
 Executes the given functions in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Returns an error if limit is less than or equal to 0.
 
-### `RunForEach[T any](items []T, fn func(item T))`
+### `RunForEach[T any](items []T, fn func(item T) error) error`
 
-Executes the given function for each item in the slice in parallel. Waits for all executions to complete before returning.
+Executes the given function for each item in the slice in parallel. Returns the first error encountered, if any.
 
-### `RunForEachLimit[T any](limit int, items []T, fn func(item T)) error`
+### `RunForEachLimit[T any](limit int, items []T, fn func(item T) error) error`
 
 Executes the given function for each item in the slice in parallel with a concurrency limit. Ensures that at most `limit` functions execute concurrently. Returns an error if limit is less than or equal to 0.
 
